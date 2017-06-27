@@ -7,9 +7,9 @@ var router = express.Router();
 var mysql = require('mysql2');       
 var connection = mysql.createConnection({
   host: 'mysql4.gear.host',
-  user: 'resbusiness',
-  database: 'resbusiness',
-  password: 'Test123.'
+  user: process.env.DBUSER,
+  database: process.env.DBUSER,
+  password: process.env.DBPASS
 });
 connection.connect(function(err){
     if(!err) {

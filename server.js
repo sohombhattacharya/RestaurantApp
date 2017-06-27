@@ -90,3 +90,54 @@ router.post("/findRestaurants", function(req, res){
       }
     );
 }); 
+router.post("/restaurants/:id/tables", function(req, res){
+    var newTable = req.body;
+    newTable['RES_ID'] = req.params.id;  
+    connection.query(
+      'INSERT INTO res_tables SET ?', newTable,
+      function(err, results, fields) {
+        if (!err)
+            res.json(results);
+          else
+              res.json({error: "Error creating restaurant table"}); 
+      }
+    );
+}); 
+router.get("/restaurants/:id/tables", function(req, res){
+    connection.query(
+      'SELECT * FROM Res_tables WHERE RES_ID=?', [req.params.id],
+      function(err, results, fields) {
+        if (!err)
+            res.json(results);
+          else
+              res.json({error: "Error getting tables"}); 
+      }
+    );
+}); 
+router.post("/users", function(req, res){
+    var newUser = req.body; 
+    connection.query(
+      'INSERT INTO users SET ?', newUser,
+      function(err, results, fields) {
+        if (!err)
+            res.json(results);
+          else{
+              if (err.errno == 1062)
+                  res.json({error: "This username already exists, please choose another one"}); 
+              else
+                  res.json({error: "Error creating user account"}); 
+          }
+      }
+    );
+}); 
+router.post("/findUsers", function(req, res){
+    connection.execute(
+      'SELECT USERNAME, NAME, ID FROM users WHERE USERNAME REGEXP ? OR NAME REGEXP ?', [req.body.search, req.body.search],
+        function(err, results, fields) {
+            if (!err)
+                res.json(results);
+            else
+                res.json({error: "error searching"}); 
+      }
+    );
+}); 

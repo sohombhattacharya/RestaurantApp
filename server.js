@@ -6,7 +6,7 @@ var restaurant = require("./routes/restaurants");
 var port = 8080 || process.env.PORT;       
 var router = express.Router();              
 mongoose.Promise = global.Promise;
-var dbHost = 'mongodb://test:test123@ds139072.mlab.com:39072/restaurantbusiness'; 
+var dbHost = 'mongodb://' + process.env.DB_USER + ':' + process.env.DB_PASS +'@ds139072.mlab.com:39072/restaurantbusiness'; 
 mongoose.connect(dbHost, function(err, database){
     if (err)
         process.exit(1);

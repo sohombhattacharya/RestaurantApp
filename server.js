@@ -7,9 +7,9 @@ var router = express.Router();
 var mysql = require('mysql2');       
 var connection = mysql.createConnection({
   host: 'mysql4.gear.host',
-  user: process.env.DBUSER,
-  database: process.env.DBUSER,
-  password: process.env.DBPASS
+  user: process.env.DBUSER || 'resbusiness',
+  database: process.env.DBUSER || 'resbusiness',
+  password: process.env.DBPASS || 'Test123.'
 });
 connection.connect(function(err){
     if(!err) {
@@ -50,6 +50,17 @@ router.get("/restaurants", function (req, res){
           else
               res.json({error: "error getting restaurants list"});
       }
+    );
+}); 
+router.get("/restaurants/:id", function (req, res){
+    connection.query(
+      'SELECT NAME, ID FROM Restaurants WHERE ID=?',[req.params.id],
+        function(err, results, fields) {
+            if (!err && results.length != 0)
+            res.json(results);
+            else
+            res.json({error: "error getting restaurant"});
+        }
     );
 }); 
 router.post("/restaurants", function(req, res){

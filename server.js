@@ -171,7 +171,7 @@ router.post("/orders", function(req, res){
 }); 
 router.get("/customers/:cid/orders", function(req, res){
     connection.query(
-        'SELECT * FROM orders O, food F WHERE CUST_ID=? AND O.FOOD_ID=F.ID', [req.params.cid],
+        'SELECT PORTION, NAME, (PRICE*PORTION) AS TOTAL FROM orders O, food F WHERE CUST_ID=? AND O.FOOD_ID=F.ID', [req.params.cid],
         function(err, results, fields) {
           if (!err)
               res.json(results);
@@ -179,4 +179,7 @@ router.get("/customers/:cid/orders", function(req, res){
               res.json({error: "Error getting orders"}); 
       }
     );
-}); 
+});
+
+
+

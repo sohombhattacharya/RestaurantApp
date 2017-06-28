@@ -169,9 +169,9 @@ router.post("/orders", function(req, res){
       }
     );
 }); 
-router.get("/orders", function(req, res){
+router.get("/customers/:cid/orders", function(req, res){
     connection.query(
-      'SELECT * FROM orders WHERE CUST_ID=?', [req.body.CUST_ID],
+      'SELECT * FROM orders WHERE CUST_ID=?', [req.params.cid],
       function(err, results, fields) {
         if (!err)
             res.json(results);

@@ -140,4 +140,20 @@ router.post("/findUsers", function(req, res){
                 res.json({error: "error searching"}); 
       }
     );
+});
+router.post("/customers", function(req, res){
+    var newCustomer = req.body; 
+    connection.query(
+      'INSERT INTO customers SET ?', newCustomer,
+      function(err, results, fields) {
+        if (!err)
+            res.json(results);
+          else{
+              if (err.errno == 1062)
+                  res.json({error: "This username is already added to this table!"}); 
+              else
+                  res.json({error: "Error adding user to table"}); 
+          }
+      }
+    );
 }); 

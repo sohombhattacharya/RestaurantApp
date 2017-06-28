@@ -145,14 +145,14 @@ router.post("/customers", function(req, res){
     var newCustomer = req.body; 
     connection.query(
       'INSERT INTO customers SET ?', newCustomer,
-      function(err, results, fields) {
-        if (!err)
-            res.json(results);
-          else{
-              if (err.errno == 1062)
-                  res.json({error: "This username is already added to this table!"}); 
-              else
-                  res.json({error: "Error adding user to table"}); 
+        function(err, results, fields) {
+            if (!err)
+                res.json(results);
+            else{
+                if (err.errno == 1062)
+                    res.json({error: "This username is already added to this table!"}); 
+                else
+                    res.json({error: "Error adding user to table"}); 
           }
       }
     );
@@ -161,20 +161,20 @@ router.post("/orders", function(req, res){
     var newOrder = req.body; 
     connection.query(
       'INSERT INTO orders SET ?', newOrder,
-      function(err, results, fields) {
-        if (!err)
-            res.json(results);
-          else
-              res.json({error: "Error adding order"}); 
+        function(err, results, fields) {
+            if (!err)
+                res.json(results);
+            else
+                res.json({error: "Error adding order"}); 
       }
     );
 }); 
 router.get("/customers/:cid/orders", function(req, res){
     connection.query(
-      'SELECT * FROM orders WHERE CUST_ID=?', [req.params.cid],
-      function(err, results, fields) {
-        if (!err)
-            res.json(results);
+        'SELECT * FROM orders O, food F WHERE CUST_ID=? AND O.FOOD_ID=F.ID', [req.params.cid],
+        function(err, results, fields) {
+          if (!err)
+              res.json(results);
           else
               res.json({error: "Error getting orders"}); 
       }

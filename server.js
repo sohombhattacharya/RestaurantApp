@@ -157,3 +157,26 @@ router.post("/customers", function(req, res){
       }
     );
 }); 
+router.post("/orders", function(req, res){
+    var newOrder = req.body; 
+    connection.query(
+      'INSERT INTO orders SET ?', newOrder,
+      function(err, results, fields) {
+        if (!err)
+            res.json(results);
+          else
+              res.json({error: "Error adding order"}); 
+      }
+    );
+}); 
+router.get("/orders", function(req, res){
+    connection.query(
+      'SELECT * FROM orders WHERE CUST_ID=?', [req.body.CUST_ID],
+      function(err, results, fields) {
+        if (!err)
+            res.json(results);
+          else
+              res.json({error: "Error getting orders"}); 
+      }
+    );
+}); 

@@ -167,7 +167,7 @@ router.post("/customers/:cid/orders", function(req, res){
         newOrders[i]['CUST_ID'] = req.params.cid;
         insertStr += "INSERT INTO orders SET ?;"; 
     }
-    insertStr += "REPLACE INTO bills (CUST_ID, AMOUNT, PAID) SELECT " + req.params.cid + ", SUM(P.TOTAL) AS AMOUNT, 0 FROM (SELECT PORTION, PRICE,(PORTION*PRICE) AS TOTAL FROM orders O, food F  WHERE CUST_ID=" + req.params.cid + " AND O.FOOD_ID=F.ID) AS P;";
+    insertStr += "UPDATE customers C INNER JOIN( SELECT SUM(P.TOTAL) AS BILL, CUST_ID FROM ( SELECT O.CUST_ID AS CUST_ID, PORTION, PRICE,(PORTION*PRICE) AS TOTAL FROM orders O, food F WHERE O.CUST_ID=" + req.params.cid + " AND O.FOOD_ID=F.ID) AS P) AS PP ON C.ID=PP.CUST_ID SET C.BILL=PP.BILL;";
     connection.query(insertStr.toString(), newOrders,function(err, results, fields) {
             if (!err){
                 res.json(results);

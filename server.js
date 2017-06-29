@@ -4,12 +4,14 @@ var bodyParser = require('body-parser');
 var restaurants = require('./routes/restaurants');
 var port = process.env.PORT || 8080;       
 var router = express.Router();              
-var mysql = require('mysql2');       
+var mysql = require('mysql2');  
+var mutableString = require("mutable-string"); 
 var connection = mysql.createConnection({
   host: 'mysql4.gear.host',
   user: process.env.DBUSER || 'resbusiness',
   database: process.env.DBUSER || 'resbusiness',
-  password: process.env.DBPASS || 'Test123.'
+  password: process.env.DBPASS || 'Test123.',
+    multipleStatements: true
 });
 connection.connect(function(err){
     if(!err) {
@@ -157,15 +159,21 @@ router.post("/customers", function(req, res){
       }
     );
 }); 
-router.post("/orders", function(req, res){
-    var newOrder = req.body; 
-    connection.query(
-      'INSERT INTO orders SET ?', newOrder,
-        function(err, results, fields) {
+router.post("/customers/:cid/orders", function(req, res){
+    var newOrders = req.body.orders;
+    var i = 0;
+    var insertStr = new mutableString(""); 
+    for (i = 0; i < newOrders.length; i++){
+        newOrders[i]['CUST_ID'] = req.params.cid;
+        insertStr += "INSERT INTO orders SET ?;"; 
+    }
+    connection.query(insertStr.toString(), newOrders,function(err, results, fields) {
             if (!err)
                 res.json(results);
-            else
-                res.json({error: "Error adding order"}); 
+            else{
+                console.log(err); 
+                res.json({error: "Error adding orders"});
+            }
       }
     );
 }); 
@@ -180,6 +188,7 @@ router.get("/customers/:cid/orders", function(req, res){
       }
     );
 });
+
 
 
 

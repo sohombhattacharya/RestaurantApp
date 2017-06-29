@@ -82,7 +82,7 @@ router.post("/restaurants", function(req, res){
     );
 }); 
 router.post("/findRestaurants", function(req, res){
-    connection.execute(
+    connection.query(
       'SELECT NAME, ID FROM Restaurants WHERE NAME REGEXP ? OR ADDRESS REGEXP ?', [req.body.search, req.body.search],
         function(err, results, fields) {
             if (!err)
@@ -167,9 +167,11 @@ router.post("/customers/:cid/orders", function(req, res){
         newOrders[i]['CUST_ID'] = req.params.cid;
         insertStr += "INSERT INTO orders SET ?;"; 
     }
+    insertStr += "REPLACE INTO bills (CUST_ID, AMOUNT, PAID) SELECT " + req.params.cid + ", SUM(P.TOTAL) AS AMOUNT, 0 FROM (SELECT PORTION, PRICE,(PORTION*PRICE) AS TOTAL FROM orders O, food F  WHERE CUST_ID=" + req.params.cid + " AND O.FOOD_ID=F.ID) AS P;";
     connection.query(insertStr.toString(), newOrders,function(err, results, fields) {
-            if (!err)
+            if (!err){
                 res.json(results);
+            }
             else{
                 console.log(err); 
                 res.json({error: "Error adding orders"});

@@ -1,64 +1,4 @@
-var express = require('express');        
-var app = express();                 
-var bodyParser = require('body-parser');
-var passport = require('passport');
-var flash    = require('connect-flash');
-var cookieParser = require('cookie-parser');
-var session      = require('express-session');
-var mysql = require('mysql2');  
-var mutableString = require("mutable-string"); 
-var port = process.env.PORT || 8080;       
-var router = express.Router();                
-
-var connection = mysql.createConnection({
-  host: 'mysql4.gear.host',
-  user: process.env.DBUSER || 'resbusiness',
-  database: process.env.DBUSER || 'resbusiness',
-  password: process.env.DBPASS || 'Test123.',
-    multipleStatements: true
-});
-connection.connect(function(err){
-    if(!err) {
-        console.log("Connected to DB");    
-        var server = app.listen(port, function(){
-        var enableCORS = function(req, res, next) {
-            res.header('Access-Control-Allow-Origin', '*');
-            res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-            res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
-
-            // intercept OPTIONS method
-            if ('OPTIONS' == req.method) {
-              res.send(200);
-            }
-            else {
-              next();
-            }
-        };
-            // enable CORS!
-            app.use(enableCORS);        
-            app.use(bodyParser.urlencoded({ extended: true }));
-            app.use(bodyParser.json());     
-            app.use(cookieParser()); 
-            app.set('view engine', 'ejs');
-            app.use(session({ 
-                secret: 'test1231234',
-                resave: true,
-                saveUninitialized: true
-            
-            })); // session secret
-            app.use(passport.initialize());
-            app.use(passport.session()); // persistent login sessions
-            app.use(flash()); // use connect-flash for flash messages stored in session
-            
-            app.use('/api', router); 
-        });        
-    } else {
-        console.log("Error connecting database");    
-    }
-});
-require('./routes/routes.js')(app, passport);
-
-
+module.exports = function(app, passport) {
 
 router.route("/").get(function(req, res) {
     res.json({ message: "restaurant rest api" });   
@@ -74,7 +14,7 @@ router.get("/restaurants", function (req, res){
       }
     );
 }); 
-router.get("/restaurants/:id", function (req, res){
+app.get("/restaurants/:id", function (req, res){
     
     connection.query('SELECT NAME, ID FROM Restaurants WHERE ID=?',[req.params.id],
         function(err, results, fields) {
@@ -85,7 +25,7 @@ router.get("/restaurants/:id", function (req, res){
         }
     );
 }); 
-router.post("/restaurants", function(req, res){
+app.post("/restaurants", function(req, res){
     var newRestaurant = req.body; 
     connection.query(
       'INSERT INTO Restaurants SET ?', newRestaurant,
@@ -101,7 +41,7 @@ router.post("/restaurants", function(req, res){
       }
     );
 }); 
-router.post("/findRestaurants", function(req, res){
+app.post("/findRestaurants", function(req, res){
     connection.query(
       'SELECT NAME, ID FROM Restaurants WHERE NAME REGEXP ? OR ADDRESS REGEXP ?', [req.body.search, req.body.search],
         function(err, results, fields) {
@@ -112,7 +52,7 @@ router.post("/findRestaurants", function(req, res){
       }
     );
 }); 
-router.post("/restaurants/:id/tables", function(req, res){
+app.post("/restaurants/:id/tables", function(req, res){
     var newTable = req.body;
     newTable['RES_ID'] = req.params.id;  
     connection.query(
@@ -125,7 +65,7 @@ router.post("/restaurants/:id/tables", function(req, res){
       }
     );
 }); 
-router.get("/restaurants/:id/tables", function(req, res){
+app.get("/restaurants/:id/tables", function(req, res){
     connection.query(
       'SELECT * FROM Res_tables WHERE RES_ID=?', [req.params.id],
       function(err, results, fields) {
@@ -136,7 +76,7 @@ router.get("/restaurants/:id/tables", function(req, res){
       }
     );
 }); 
-router.post("/users", function(req, res){
+app.post("/users", function(req, res){
     var newUser = req.body; 
     connection.query(
       'INSERT INTO users SET ?', newUser,
@@ -152,7 +92,7 @@ router.post("/users", function(req, res){
       }
     );
 }); 
-router.post("/findUsers", function(req, res){
+app.post("/findUsers", function(req, res){
     connection.execute(
       'SELECT USERNAME, NAME, ID FROM users WHERE USERNAME REGEXP ? OR NAME REGEXP ?', [req.body.search, req.body.search],
         function(err, results, fields) {
@@ -163,7 +103,7 @@ router.post("/findUsers", function(req, res){
       }
     );
 });
-router.post("/customers", function(req, res){
+app.post("/customers", function(req, res){
     var newCustomer = req.body; 
     connection.query(
       'INSERT INTO customers SET ?', newCustomer,
@@ -179,7 +119,7 @@ router.post("/customers", function(req, res){
       }
     );
 }); 
-router.post("/customers/:cid/orders", function(req, res){
+app.post("/customers/:cid/orders", function(req, res){
     var newOrders = req.body.orders;
     var i = 0;
     var insertStr = new mutableString(""); 
@@ -199,7 +139,7 @@ router.post("/customers/:cid/orders", function(req, res){
       }
     );
 }); 
-router.get("/customers/:cid/orders", function(req, res){
+app.get("/customers/:cid/orders", function(req, res){
     connection.query(
         'SELECT PORTION, NAME, (PRICE*PORTION) AS TOTAL FROM orders O, food F WHERE CUST_ID=? AND O.FOOD_ID=F.ID', [req.params.cid],
         function(err, results, fields) {
@@ -213,4 +153,4 @@ router.get("/customers/:cid/orders", function(req, res){
 
 
 
-
+};

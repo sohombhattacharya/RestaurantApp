@@ -1,18 +1,45 @@
-module.exports = function(app, passport) {
+//var mysql = require('mysql2');  
+//var connection = mysql.createConnection({
+//  host: 'mysql4.gear.host',
+//  user: process.env.DBUSER || 'resbusiness',
+//  database: process.env.DBUSER || 'resbusiness',
+//  password: process.env.DBPASS || 'Test123.',
+//    multipleStatements: true
+//});
+//connection.connect(function(err){
+//    if (!err){
+//        console.log("connected to db"); 
+//    }
+//    else{
+//        console.log("connection to db failed"); 
+//    }
+//
+//}); 
+var db = require('../db'); 
+var bodyParser = require('body-parser');
 
-router.route("/").get(function(req, res) {
+module.exports = function(app, passport) {
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({extended: true}))
+app.get("/",function(req, res) {
     res.json({ message: "restaurant rest api" });   
 });
-router.get("/restaurants", function (req, res){
-    connection.query(
-      'SELECT NAME, ID FROM Restaurants',
-      function(err, results, fields) {
-        if (!err)
-            res.json(results);
-          else
-              res.json({error: "error getting restaurants list"});
-      }
-    );
+app.get("/restaurants", function (req, res){
+    db(function(err, connection){
+        if (!err){
+            connection.query(
+              'SELECT NAME, ID FROM Restaurants',
+              function(err2, results, fields) {
+                if (!err2){
+                    connection.release(); 
+                    res.json(results);
+                }
+                  else
+                      res.json({error: "error getting restaurants list"});
+              }
+            );            
+        }
+    }); 
 }); 
 app.get("/restaurants/:id", function (req, res){
     
@@ -25,21 +52,49 @@ app.get("/restaurants/:id", function (req, res){
         }
     );
 }); 
+app.post('/restaurantSignup', function(req, res){
+    var restaurant = req.body; 
+    console.log(req.body); 
+    passport.authenticate('local-signup', function(err, restaurant, info){
+        
+    if (!err){
+        res.json({res: restaurant, info: info}); 
+    }
+    else
+        res.json({error: "error"}); 
+
+
+
+    })(req, res); 
+        
+
+});
 app.post("/restaurants", function(req, res){
-    var newRestaurant = req.body; 
-    connection.query(
-      'INSERT INTO Restaurants SET ?', newRestaurant,
-      function(err, results, fields) {
-        if (!err)
-            res.json(results);
-          else{
-              if (err.errno == 1062)
-                  res.json({error: "This username already exists, please choose another one"}); 
-              else
-                  res.json({error: "Error creating restaurant account"}); 
-          }
-      }
-    );
+    var newRestaurant = req.body;
+    console.log(req.body); 
+    
+    db(function(err1, connection){
+        if (err1){
+            res.json({error: "error"}); 
+        }
+        else{
+            connection.query(
+              'INSERT INTO Restaurants SET ?', newRestaurant,
+              function(err, results, fields) {
+                if (!err){
+                    connection.release(); 
+                    res.json(results);
+                }
+                  else{
+                      if (err.errno == 1062)
+                          res.json({error: "This username already exists, please choose another one"}); 
+                      else
+                          res.json({error: "Error creating restaurant account"}); 
+                  }
+              }
+            );
+        }
+    });
 }); 
 app.post("/findRestaurants", function(req, res){
     connection.query(

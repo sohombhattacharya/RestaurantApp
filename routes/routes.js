@@ -1,30 +1,13 @@
-//var mysql = require('mysql2');  
-//var connection = mysql.createConnection({
-//  host: 'mysql4.gear.host',
-//  user: process.env.DBUSER || 'resbusiness',
-//  database: process.env.DBUSER || 'resbusiness',
-//  password: process.env.DBPASS || 'Test123.',
-//    multipleStatements: true
-//});
-//connection.connect(function(err){
-//    if (!err){
-//        console.log("connected to db"); 
-//    }
-//    else{
-//        console.log("connection to db failed"); 
-//    }
-//
-//}); 
 var db = require('../db'); 
 var bodyParser = require('body-parser');
-
+var middleware = require('./middleware'); 
 module.exports = function(app, passport) {
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({extended: true}))
 app.get("/",function(req, res) {
     res.json({ message: "restaurant rest api" });   
 });
-app.get("/restaurants", function (req, res){
+app.get("/restaurants", middleware, function (req, res){
     db(function(err, connection){
         if (!err){
             connection.query(
@@ -52,7 +35,7 @@ app.get("/restaurants/:id", function (req, res){
         }
     );
 }); 
-app.post('/restaurantSignup', function(req, res){
+app.post('/restaurantSignup', middleware,function(req, res){
     var restaurant = req.body; 
     passport.authenticate('local-restaurant-signup', function(err, results, info){
         
@@ -68,7 +51,7 @@ app.post('/restaurantSignup', function(req, res){
         
 
 });
-app.post('/restaurantLogin', function(req, res){
+app.post('/restaurantLogin', middleware, function(req, res){
     var restaurant = req.body; 
     passport.authenticate('local-restaurant-login', function(err, restaurant, info){
         

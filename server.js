@@ -10,13 +10,6 @@ var mutableString = require("mutable-string");
 var port = process.env.PORT || 8080;       
 var router = express.Router();                
 
-//var connection = mysql.createConnection({
-//  host: 'mysql4.gear.host',
-//  user: process.env.DBUSER || 'resbusiness',
-//  database: process.env.DBUSER || 'resbusiness',
-//  password: process.env.DBPASS || 'Test123.',
-//    multipleStatements: true
-//});   
         var server = app.listen(port, function(){
         var enableCORS = function(req, res, next) {
             res.header('Access-Control-Allow-Origin', '*');
@@ -46,6 +39,10 @@ var router = express.Router();
             app.use(passport.initialize());
             app.use(passport.session()); // persistent login sessions
             app.use(flash()); // use connect-flash for flash messages stored in session
+//            app.use('/restaurantLogin',function(req, res, next){
+//                console.log("just used an endpoint"); 
+//                next(); 
+//            }); 
         });        
     
 require('./routes/routes.js')(app, passport);

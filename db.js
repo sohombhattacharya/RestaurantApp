@@ -1,9 +1,10 @@
 var mysql = require("mysql2"); 
+var config = require('./config/keys'); 
 var pool = mysql.createPool({
-    host: 'mysql4.gear.host',
-    user: process.env.DBUSER || 'resbusiness',
-    database: process.env.DBUSER || 'resbusiness',
-    password: process.env.DBPASS || 'Test123.',
+    host: config.DBHOST,
+    user: config.DBUSER,
+    database: config.DBNAME,
+    password: config.DBPASS,
     multipleStatements: true,
     connectionLimit: 100
 });  
@@ -14,8 +15,8 @@ var getConnection = function (cb) {
         if(err) {
           return cb(err);
         }
+        console.log("got db connection"); 
         cb(null, connection);
     });
 };
 module.exports = getConnection;
-//module.exports.pool = pool.getConnection;

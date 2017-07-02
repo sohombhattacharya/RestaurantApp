@@ -1,6 +1,7 @@
 var LocalStrategy   = require('passport-local').Strategy;
 var db = require('../db');
 var bcrypt = require('bcrypt'); 
+var jwt = require('jsonwebtoken'); 
 module.exports = function(passport) {
 
     // =========================================================================
@@ -104,8 +105,11 @@ passport.use('local-restaurant-login', new LocalStrategy({
                         done(err2); 
                     if (results.length == 1){
                         if (bcrypt.compareSync(password, results[0].PASS)){
-                            var restaurant = {name: results[0].NAME, address: results[0].ADDRESS, ID: results[0].ID};
-                            done(null, restaurant); 
+                            var token = jwt.sign(user, app.get('superSecret'), {
+                                expiresInMinutes: 1440 // expires in 24 hours
+                            });
+                            var returnObj = {name: results[0].NAME, address: results[0].ADDRESS, ID: results[0].ID};
+                            done(null, returnObj); 
                         }
                         else
                             return done(null, false, 'Password incorrect, try again'); 

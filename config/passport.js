@@ -18,13 +18,10 @@ module.exports = function(passport) {
 
     // used to deserialize the user
     passport.deserializeUser(function(id, done) {
-//        User.findById(id, function(err, user) {
-//            done(err, user);
-//        });
         db(function(err, connection){
             connection.query('SELECT NAME, ID FROM Restaurants WHERE ID=?',[id],
                 function(err2, results, fields) {
-                    done(err2, results); 
+                        done(err2, results);                        
                 }
             );
         }); 
@@ -108,7 +105,7 @@ passport.use('local-restaurant-login', new LocalStrategy({
                         if (bcrypt.compareSync(password, results[0].PASS)){
                             var returnObj = {name: results[0].NAME, address: results[0].ADDRESS, ID: results[0].ID};                        
                             var token = jwt.sign(returnObj, config.SECRET, {
-                                expiresIn: 20 
+                                expiresIn: 60*60*24 
                             });
                             returnObj['token'] = token; 
                             done(null, returnObj); 

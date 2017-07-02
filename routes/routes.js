@@ -7,7 +7,7 @@ app.use(bodyParser.urlencoded({extended: true}))
 app.get("/",function(req, res) {
     res.json({ message: "restaurant rest api" });   
 });
-app.get("/restaurants", middleware, function (req, res){
+app.get("/restaurants", middleware.api, function (req, res){
     db(function(err, connection){
         if (!err){
             connection.query(
@@ -24,7 +24,7 @@ app.get("/restaurants", middleware, function (req, res){
         }
     }); 
 }); 
-app.get("/restaurants/:id", function (req, res){
+app.get("/restaurants/:id", middleware.api, function (req, res){
     
     connection.query('SELECT NAME, ID FROM Restaurants WHERE ID=?',[req.params.id],
         function(err, results, fields) {
@@ -67,7 +67,7 @@ app.post('/restaurantLogin', function(req, res){
         
 
 });    
-app.post("/restaurants", middleware, function(req, res){
+app.post("/restaurants", middleware.api, function(req, res){
     var newRestaurant = req.body;    
     db(function(err1, connection){
         if (err1){

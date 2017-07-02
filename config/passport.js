@@ -1,5 +1,6 @@
 var LocalStrategy   = require('passport-local').Strategy;
 var db = require('../db');
+var bcrypt = require('bcrypt'); 
 module.exports = function(passport) {
 
     // =========================================================================
@@ -58,7 +59,7 @@ module.exports = function(passport) {
                     else if (results.length > 0)
                         return done(null, false, 'That username is already taken.'); 
                     else{
-                        var newRestaurant = {'NAME': req.body.name, 'USERNAME': username, 'PASS': password, 'ADDRESS': req.body.address}; 
+                        var newRestaurant = {'NAME': req.body.name, 'USERNAME': username, 'PASS': bcrypt.hashSync(password, 10), 'ADDRESS': req.body.address}; 
                         connection.query(
                           'INSERT INTO Restaurants SET ?', newRestaurant,
                           function(err3, results1, fields1) {
@@ -102,7 +103,7 @@ passport.use('local-restaurant-login', new LocalStrategy({
                     if (err2)
                         done(err2); 
                     if (results.length == 1){
-                        if (results[0].PASS == password){
+                        if (bcrypt.compareSync(password, results[0].PASS)){
                             var restaurant = {name: results[0].NAME, address: results[0].ADDRESS, ID: results[0].ID};
                             done(null, restaurant); 
                         }

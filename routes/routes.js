@@ -35,7 +35,7 @@ app.get("/restaurants/:id", function (req, res){
         }
     );
 }); 
-app.post('/restaurantSignup', middleware,function(req, res){
+app.post('/restaurantSignup',function(req, res){
     var restaurant = req.body; 
     passport.authenticate('local-restaurant-signup', function(err, results, info){
         
@@ -51,7 +51,7 @@ app.post('/restaurantSignup', middleware,function(req, res){
         
 
 });
-app.post('/restaurantLogin', middleware, function(req, res){
+app.post('/restaurantLogin', function(req, res){
     var restaurant = req.body; 
     passport.authenticate('local-restaurant-login', function(err, restaurant, info){
         
@@ -67,10 +67,8 @@ app.post('/restaurantLogin', middleware, function(req, res){
         
 
 });    
-app.post("/restaurants", function(req, res){
-    var newRestaurant = req.body;
-    console.log(req.body); 
-    
+app.post("/restaurants", middleware, function(req, res){
+    var newRestaurant = req.body;    
     db(function(err1, connection){
         if (err1){
             res.json({error: "error"}); 

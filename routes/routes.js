@@ -54,11 +54,10 @@ app.get("/restaurants/:id", function (req, res){
 }); 
 app.post('/restaurantSignup', function(req, res){
     var restaurant = req.body; 
-    console.log(req.body); 
-    passport.authenticate('local-signup', function(err, restaurant, info){
+    passport.authenticate('local-restaurant-signup', function(err, results, info){
         
     if (!err){
-        res.json({res: restaurant, info: info}); 
+        res.json({results: results, info: info}); 
     }
     else
         res.json({error: "error"}); 
@@ -69,6 +68,22 @@ app.post('/restaurantSignup', function(req, res){
         
 
 });
+app.post('/restaurantLogin', function(req, res){
+    var restaurant = req.body; 
+    passport.authenticate('local-restaurant-login', function(err, restaurant, info){
+        
+    if (!err){
+        res.json({results: restaurant, info: info}); 
+    }
+    else
+        res.json({error: info}); 
+
+
+
+    })(req, res); 
+        
+
+});    
 app.post("/restaurants", function(req, res){
     var newRestaurant = req.body;
     console.log(req.body); 

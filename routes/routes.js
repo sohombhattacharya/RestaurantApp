@@ -1,9 +1,43 @@
 var db = require('../db'); 
 var bodyParser = require('body-parser');
 var middleware = require('./middleware'); 
+var session = require('express-session'); 
+var cookieParser = require('cookie-parser');
+var mutableString = require("mutable-string"); 
+var bodyParser = require('body-parser');
+
 module.exports = function(app, passport) {
-app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({extended: true}))
+var enableCORS = function(req, res, next) {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+     res.header('Access-Control-Allow-Credentials', true);
+
+    // intercept OPTIONS method
+    if ('OPTIONS' == req.method) {
+      res.send(200);
+    }
+    else {
+      next();
+    }
+};    
+app.use(enableCORS);            
+app.use(cookieParser()); 
+app.set('view engine', 'ejs');    
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(session({ 
+    secret: 'test1231234',
+    resave: true,
+    saveUninitialized: true,
+    proxy: true
+            
+})); // session secret
+
+// Init passport authentication
+app.use(passport.initialize());
+// persistent login sessions 
+app.use(passport.session());
 app.get("/",function(req, res) {
     res.json({ message: "restaurant rest api" });   
 });
@@ -35,38 +69,40 @@ app.get("/restaurants/:id", middleware.api, function (req, res){
         }
     );
 }); 
-app.post('/restaurantSignup',function(req, res){
-    var restaurant = req.body; 
+app.post('/restaurantSignup',function(req, res, next){
     passport.authenticate('local-restaurant-signup', function(err, results, info){
-        
-    if (!err){
-        res.json({results: results, info: info}); 
-    }
+    if (!err)
+        res.json({success: true, message: info}); 
     else
-        res.json({error: "error"}); 
-
-
-
-    })(req, res); 
-        
-
+        res.json({success: false, message: info}); 
+    })(req, res, next); 
 });
-app.post('/restaurantLogin', function(req, res){
+app.post('/restaurantLogin', function(req, res, next){
     var restaurant = req.body; 
     passport.authenticate('local-restaurant-login', function(err, restaurant, info){
         
     if (!err){
-        res.json({results: restaurant, info: info}); 
+
+        req.login(restaurant, function(err1) {
+          if (err1) {
+              return next(err1);
+          }
+          return res.json({success: true, restaurant: req.user});  
+        });  
     }
     else
         res.json({error: info}); 
 
 
 
-    })(req, res); 
+    })(req, res, next); 
         
 
 });    
+app.get('/restaurantLogout', function(req, res, next){ 
+    req.logout();
+    res.json({success: true, message: "logged out"}); 
+}); 
 app.post("/restaurants", middleware.api, function(req, res){
     var newRestaurant = req.body;    
     db(function(err1, connection){

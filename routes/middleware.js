@@ -21,8 +21,6 @@ module.exports = {
                     return res.json({ success: false, message: 'Failed to authenticate token.' });    
                   } else {
                     // if everything is good, save to request for use in other routes
-                    req.decoded = decoded; 
-                    console.log(decoded);
                     next();
                   }
                 });    

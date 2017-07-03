@@ -12,14 +12,14 @@ module.exports = function(passport) {
     // passport needs ability to serialize and unserialize users out of session
 
     // used to serialize the user for the session
-    passport.serializeUser(function(restaurant, done) {
-        done(null, restaurant.ID);
+    passport.serializeUser(function(user, done) {
+        done(null, user.ID);
     });
 
     // used to deserialize the user
     passport.deserializeUser(function(id, done) {
         db(function(err, connection){
-            connection.query('SELECT NAME, ID FROM Restaurants WHERE ID=?',[id],
+            connection.query('SELECT NAME, ADDRESS, ID FROM Restaurants WHERE ID=?',[id],
                 function(err2, results, fields) {
                         done(err2, results);                        
                 }
@@ -55,20 +55,20 @@ module.exports = function(passport) {
                     function(err2, results, fields) {
                     if (err2)
                         done(err2, false); 
-                    else if (results.length > 0)
+                    else if (results.length > 0){
                         return done(null, false, 'That username is already taken.'); 
+                    }
                     else{
                         var newRestaurant = {'NAME': req.body.name, 'USERNAME': username, 'PASS': bcrypt.hashSync(password, 10), 'ADDRESS': req.body.address}; 
                         connection.query(
                           'INSERT INTO Restaurants SET ?', newRestaurant,
                           function(err3, results1, fields1) {
                               if (err3){
-
-                                  done(err3, false, "Error");
+                                  done(err3, false, "Database Error");
                               }
                               else{
                                   connection.release(); 
-                                  done(null, results1);
+                                  done(null, results1, "Created restaurant account");
                               } 
                           }
                         );                

@@ -77,33 +77,53 @@ app.post('/restaurantSignup',function(req, res, next){
         res.json({success: false, message: info}); 
     })(req, res, next); 
 });
+app.post('/userSignup',function(req, res, next){
+    passport.authenticate('local-user-signup', function(err, results, info){
+    if (!err)
+        res.json({success: true, message: info}); 
+    else
+        res.json({success: false, message: info}); 
+    })(req, res, next); 
+});    
 app.post('/restaurantLogin', function(req, res, next){
-    var restaurant = req.body; 
-    passport.authenticate('local-restaurant-login', function(err, restaurant, info){
-        
+    passport.authenticate('local-restaurant-login', function(err, user, info){
     if (!err){
-
-        req.login(restaurant, function(err1) {
+        req.login(user, function(err1) {
           if (err1) {
               return next(err1);
           }
-          return res.json({success: true, restaurant: req.user});  
+          return res.json({success: true, body: req.user});  
         });  
     }
     else
         res.json({error: info}); 
-
-
-
     })(req, res, next); 
         
 
+});
+app.post('/userLogin', function(req, res, next){
+    passport.authenticate('local-user-login', function(err, user, info){
+    if (!err){
+        req.login(user, function(err1) {
+          if (err1) {
+              return res.json({success: false, message: info}); ;
+          }
+          return res.json({success: true, body: req.user});  
+        });  
+    }
+    else
+        res.json({error: info}); 
+    })(req, res, next); 
 });    
 app.get('/restaurantLogout', function(req, res, next){ 
     req.logout();
     res.json({success: true, message: "logged out"}); 
 }); 
-app.post("/restaurants", middleware.api, function(req, res){
+app.get('/userLogout', function(req, res, next){ 
+    req.logout();
+    res.json({success: true, message: "logged out"}); 
+});     
+app.post("/restaurants", function(req, res){
     var newRestaurant = req.body;    
     db(function(err1, connection){
         if (err1){
@@ -142,15 +162,23 @@ app.post("/findRestaurants", function(req, res){
 app.post("/restaurants/:id/tables", function(req, res){
     var newTable = req.body;
     newTable['RES_ID'] = req.params.id;  
-    connection.query(
-      'INSERT INTO res_tables SET ?', newTable,
-      function(err, results, fields) {
-        if (!err)
-            res.json(results);
-          else
-              res.json({error: "Error creating restaurant table"}); 
-      }
-    );
+    db(function(err1, connection){
+        if (!err1){
+            connection.query(
+              'INSERT INTO res_tables SET ?', newTable,
+              function(err, results, fields) {
+                if (!err){
+                    connection.release(); 
+                    res.json(results);
+                }
+                  else{
+                      connection.release(); 
+                      res.json({error: "Error creating restaurant table"}); 
+                  }
+              }
+            );
+        }
+    });
 }); 
 app.get("/restaurants/:id/tables", function(req, res){
     connection.query(

@@ -11,7 +11,7 @@ module.exports = {
 //    },
     
     api: function(req, res, next){
-    
+        console.log(req.session); 
         if (req.isAuthenticated()){
             var token = req.body.token || req.query.token || req.headers['x-access-token'];
             if (token){

@@ -41,7 +41,7 @@ app.use(passport.session());
 app.get("/",function(req, res) {
     res.json({ message: "restaurant rest api" });   
 });
-app.get("/restaurants", middleware.api, function (req, res){
+app.get("/restaurants", middleware.user, function (req, res){
     db(function(err, connection){
         if (!err){
             connection.query(
@@ -58,9 +58,9 @@ app.get("/restaurants", middleware.api, function (req, res){
         }
     }); 
 }); 
-app.get("/restaurants/:id", middleware.api, function (req, res){
+app.get("/restaurants/:id", middleware.restaurant, function (req, res){
     
-    connection.query('SELECT NAME, ID FROM Restaurants WHERE ID=?',[req.params.id],
+    connection.query('SELECT NAME, ADDRESS FROM Restaurants WHERE ID=?',[req.params.id],
         function(err, results, fields) {
             if (!err && results.length != 0)
                 res.json(results);

@@ -10,29 +10,59 @@ module.exports = {
 //
 //    },
     
-    api: function(req, res, next){
-        console.log(req.session); 
+    restaurant: function(req, res, next){
         if (req.isAuthenticated()){
-            var token = req.body.token || req.query.token || req.headers['x-access-token'];
+            var token = req.body.token || req.query.token || req.headers['x-access-token'];            
             if (token){
-                var token = req.body.token || req.query.token || req.headers['x-access-token'];
                 jwt.verify(token, config.SECRET, function(err, decoded) {      
                   if (err) {
                     return res.json({ success: false, message: 'Failed to authenticate token.' });    
                   } else {
-                    // if everything is good, save to request for use in other routes
-                    next();
+                      var decodedData = decoded; 
+                      if (decodedData.isARestaurant && decodedData.ID == req.session.passport.user.ID)
+                          next();
+                      else
+                          return res.json({success: false, message: "Not authorized"});
                   }
                 });    
             }
             else
-                return res.json({success: false, message: "Not authorized for API use"});         
+                return res.json({success: false, message: "Not authorized"});  
+            
+            
+            
         }
         else
             return res.json({success: false, message: "Not signed in"});
             
-        
-    }
+    },
+    user: function(req, res, next){
+        if (req.isAuthenticated()){
+            var token = req.body.token || req.query.token || req.headers['x-access-token'];            
+            if (token){
+                jwt.verify(token, config.SECRET, function(err, decoded) {      
+                  if (err) {
+                    return res.json({ success: false, message: 'Failed to authenticate token.' });    
+                  } else {
+                      var decodedData = decoded; 
+                      if (!decodedData.isARestaurant && decodedData.ID == req.session.passport.user.ID)
+                          next();
+                      else
+                          return res.json({success: false, message: "Not authorized"});
+                  }
+                });    
+            }
+            else
+                return res.json({success: false, message: "Not authorized"});  
+            
+            
+            
+        }
+        else
+            return res.json({success: false, message: "Not signed in"});
+            
+    }    
+    
 
 
 }

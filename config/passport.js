@@ -169,11 +169,17 @@ module.exports = function(passport) {
                             done(err2); 
                         if (results.length == 1){
                             if (bcrypt.compareSync(password, results[0].PASS)){
-                                var returnObj = {NAME: results[0].NAME, ADDRESS: results[0].ADDRESS, ID: results[0].ID};                    
-                                var token = jwt.sign(returnObj, config.SECRET, {
+                                var returnObj = {NAME: results[0].NAME, ADDRESS: results[0].ADDRESS, ID: results[0].ID}; 
+                                var secureObj = {NAME: results[0].NAME, ADDRESS: results[0].ADDRESS, ID: results[0].ID}; 
+                                secureObj['isARestaurant'] = true; 
+                                var currTime = new Date(); 
+                                secureObj['loginTime'] = currTime.toUTCString(); 
+                                
+                                var token = jwt.sign(secureObj, config.SECRET, {
                                     expiresIn: 60*60*24 
                                 });
                                 returnObj['token'] = token; 
+                                
                                 done(null, returnObj); 
                             }
                             else
@@ -218,8 +224,12 @@ module.exports = function(passport) {
                             done(err2); 
                         if (results.length == 1){
                             if (bcrypt.compareSync(password, results[0].PASS)){
-                                var returnObj = {NAME: results[0].NAME, ID: results[0].ID};                        
-                                var token = jwt.sign(returnObj, config.SECRET, {
+                                var returnObj = {NAME: results[0].NAME, ID: results[0].ID}; 
+                                var secureObj = {NAME: results[0].NAME, ID: results[0].ID}; 
+                                secureObj['isARestaurant'] = false; 
+                                var currTime = new Date(); 
+                                secureObj['loginTime'] = currTime.toUTCString();                                 
+                                var token = jwt.sign(secureObj, config.SECRET, {
                                     expiresIn: 60*60*24 
                                 });
                                 returnObj['token'] = token; 

@@ -41,33 +41,40 @@ app.use(passport.session());
 app.get("/",function(req, res) {
     res.json({ message: "restaurant rest api" });   
 });
-app.get("/restaurants", middleware.user, function (req, res){
+app.get("/restaurants", middleware.all, function (req, res){
     db(function(err, connection){
         if (!err){
             connection.query(
-              'SELECT NAME, ID FROM Restaurants',
+              'SELECT NAME, ADDRESS FROM Restaurants',
               function(err2, results, fields) {
-                if (!err2){
-                    connection.release(); 
-                    res.json(results);
-                }
-                  else
-                      res.json({error: "error getting restaurants list"});
+                connection.release();
+                if (!err2)
+                    res.json({success: true, results: results});
+                else
+                    res.json({success: false, error: "error getting restaurants list"});
               }
             );            
         }
+        else
+            res.json({success: false, error: "database connection failed"}); 
     }); 
 }); 
-app.get("/restaurants/:id", middleware.restaurant, function (req, res){
-    
-    connection.query('SELECT NAME, ADDRESS FROM Restaurants WHERE ID=?',[req.params.id],
-        function(err, results, fields) {
-            if (!err && results.length != 0)
-                res.json(results);
-            else
-                res.json({error: "error getting restaurant"});
-        }
-    );
+app.get("/restaurants/:id", middleware.specRestaurantOrUser, function (req, res){
+    db(function(err1, connection){
+        if (!err1){
+            connection.query('SELECT NAME, ADDRESS FROM Restaurants WHERE ID=?',[req.params.id],
+                function(err, results, fields) {
+                    connection.release(); 
+                    if (!err && results.length != 0)
+                        res.json({success: true, results: results});
+                    else
+                        res.json({success: false, error: "error getting restaurant"});
+                }
+            );         
+        }   
+        else
+            res.json({success: false, error: "database connection failed"});
+    }); 
 }); 
 app.post('/restaurantSignup',function(req, res, next){
     passport.authenticate('local-restaurant-signup', function(err, results, info){
@@ -96,7 +103,7 @@ app.post('/restaurantLogin', function(req, res, next){
         });  
     }
     else
-        res.json({error: info}); 
+        res.json({success: false, error: info}); 
     })(req, res, next); 
         
 
@@ -112,7 +119,7 @@ app.post('/userLogin', function(req, res, next){
         });  
     }
     else
-        res.json({error: info}); 
+        res.json({success: false, error: info}); 
     })(req, res, next); 
 });    
 app.get('/restaurantLogout', function(req, res, next){ 
@@ -123,147 +130,194 @@ app.get('/userLogout', function(req, res, next){
     req.logout();
     res.json({success: true, message: "logged out"}); 
 });     
-app.post("/restaurants", function(req, res){
-    var newRestaurant = req.body;    
+app.post("/restaurants", middleware.all, function(req, res){    
     db(function(err1, connection){
         if (err1){
-            res.json({error: "error"}); 
+            res.json({success: false, error: "database connection failed"}); 
         }
         else{
+            var newRestaurant = req.body;
             connection.query(
               'INSERT INTO Restaurants SET ?', newRestaurant,
               function(err, results, fields) {
-                if (!err){
-                    connection.release(); 
-                    res.json(results);
-                }
-                  else{
+                connection.release(); 
+                if (!err)
+                    res.json({success: false, results: results});
+                
+                else{
                       if (err.errno == 1062)
-                          res.json({error: "This username already exists, please choose another one"}); 
+                          res.json({success: false, error: "This username already exists, please choose another one"}); 
                       else
-                          res.json({error: "Error creating restaurant account"}); 
+                          res.json({success: false, error: "Error creating restaurant account"}); 
                   }
               }
             );
         }
     });
 }); 
-app.post("/findRestaurants", function(req, res){
-    connection.query(
-      'SELECT NAME, ID FROM Restaurants WHERE NAME REGEXP ? OR ADDRESS REGEXP ?', [req.body.search, req.body.search],
-        function(err, results, fields) {
-            if (!err)
-                res.json(results);
-            else
-                res.json({error: "error searching"}); 
-      }
-    );
-}); 
-app.post("/restaurants/:id/tables", function(req, res){
-    var newTable = req.body;
-    newTable['RES_ID'] = req.params.id;  
+app.post("/findRestaurants", middleware.user, function(req, res){
     db(function(err1, connection){
         if (!err1){
             connection.query(
+              'SELECT NAME, ID FROM Restaurants WHERE NAME REGEXP ? OR ADDRESS REGEXP ?', [req.body.search, req.body.search],
+                function(err, results, fields) {
+                    connection.release(); 
+                    if (!err)
+                        res.json({success: true, results:results});
+                    else
+                        res.json({success: false, error: "error searching"}); 
+              }
+            );        
+        }
+        else
+            res.json({success: false, error: "database connection failed"});
+    
+    }); 
+}); 
+app.post("/restaurants/:id/tables", middleware.restaurant, function(req, res){  
+    db(function(err1, connection){
+        if (!err1){
+        var newTable = req.body;
+        newTable['RES_ID'] = req.params.id;            
+            connection.query(
               'INSERT INTO res_tables SET ?', newTable,
               function(err, results, fields) {
-                if (!err){
-                    connection.release(); 
-                    res.json(results);
-                }
+                  connection.release(); 
+                if (!err)
+                    res.json({success: true, results: results});
+                else
+                      res.json({success: false, error: "Error creating restaurant table"}); 
+              }
+            );
+        }
+        else
+            res.json({success: false, error: "database connection failed"});
+    });
+}); 
+app.get("/restaurants/:id/tables", middleware.restaurant, function(req, res){
+    db(function(err1, connection){
+        if (!err1){
+            connection.query(
+              'SELECT * FROM Res_tables WHERE RES_ID=?', [req.params.id],
+              function(err, results, fields) {
+                connection.release();   
+                if (!err)
+                    res.json({success: true, results: results});
+                else
+                    res.json({success: false, error: "Error getting tables"}); 
+              }
+            );        
+        }
+        else
+            res.json({success: false, error: "database connection failed"});
+    }); 
+}); 
+app.post("/users", function(req, res){ 
+    db(function(err1, connection){
+        if (!err1){
+            var newUser = req.body;
+            connection.query(
+              'INSERT INTO users SET ?', newUser,
+              function(err, results, fields) {
+                  connection.release(); 
+                if (!err)
+                    res.json({success: true, results: results});
                   else{
-                      connection.release(); 
-                      res.json({error: "Error creating restaurant table"}); 
+                      if (err.errno == 1062)
+                          res.json({success: false, error: "This username already exists, please choose another one"}); 
+                      else
+                          res.json({success: false, error: "Error creating user account"}); 
                   }
               }
             );
         }
-    });
+        else
+            res.json({success: false, error: "database connection failed"});
+    }); 
 }); 
-app.get("/restaurants/:id/tables", function(req, res){
-    connection.query(
-      'SELECT * FROM Res_tables WHERE RES_ID=?', [req.params.id],
-      function(err, results, fields) {
-        if (!err)
-            res.json(results);
-          else
-              res.json({error: "Error getting tables"}); 
-      }
-    );
-}); 
-app.post("/users", function(req, res){
-    var newUser = req.body; 
-    connection.query(
-      'INSERT INTO users SET ?', newUser,
-      function(err, results, fields) {
-        if (!err)
-            res.json(results);
-          else{
-              if (err.errno == 1062)
-                  res.json({error: "This username already exists, please choose another one"}); 
-              else
-                  res.json({error: "Error creating user account"}); 
-          }
-      }
-    );
-}); 
-app.post("/findUsers", function(req, res){
-    connection.execute(
-      'SELECT USERNAME, NAME, ID FROM users WHERE USERNAME REGEXP ? OR NAME REGEXP ?', [req.body.search, req.body.search],
-        function(err, results, fields) {
-            if (!err)
-                res.json(results);
-            else
-                res.json({error: "error searching"}); 
-      }
-    );
+app.post("/findUsers", middleware.all, function(req, res){
+    db(function(err1, connection){
+        if (!err1){
+            connection.execute(
+              'SELECT USERNAME, NAME, ID FROM users WHERE USERNAME REGEXP ? OR NAME REGEXP ?', [req.body.search, req.body.search],
+                function(err, results, fields) {
+                    connection.release(); 
+                    if (!err)
+                        res.json({success: true, results: results});
+                    else
+                        res.json({success: false, error: "error searching"}); 
+              }
+            );        
+        }
+        else
+            res.json({success: false, error: "database connection failed"});
+    }); 
 });
-app.post("/customers", function(req, res){
-    var newCustomer = req.body; 
-    connection.query(
-      'INSERT INTO customers SET ?', newCustomer,
-        function(err, results, fields) {
-            if (!err)
-                res.json(results);
-            else{
-                if (err.errno == 1062)
-                    res.json({error: "This username is already added to this table!"}); 
-                else
-                    res.json({error: "Error adding user to table"}); 
-          }
-      }
-    );
+app.post("/customers", function(req, res){ 
+    db(function(err1, connection){
+        if (!err1){
+            var newCustomer = req.body;
+            connection.query(
+              'INSERT INTO customers SET ?', newCustomer,
+                function(err, results, fields) {
+                    if (!err)
+                        res.json({success: true, results: results});
+                    else{
+                        if (err.errno == 1062)
+                            res.json({success: false, error: "This username is already added to this table!"}); 
+                        else
+                            res.json({success: false, error: "Error adding user to table"}); 
+                  }
+              }
+            );        
+        }
+        else
+            res.json({success: false, error: "database connection failed"});
+    }); 
 }); 
-app.post("/customers/:cid/orders", function(req, res){
-    var newOrders = req.body.orders;
-    var i = 0;
-    var insertStr = new mutableString(""); 
-    for (i = 0; i < newOrders.length; i++){
-        newOrders[i]['CUST_ID'] = req.params.cid;
-        insertStr += "INSERT INTO orders SET ?;"; 
-    }
-    insertStr += "UPDATE customers C INNER JOIN( SELECT SUM(P.TOTAL) AS BILL, CUST_ID FROM ( SELECT O.CUST_ID AS CUST_ID, PORTION, PRICE,(PORTION*PRICE) AS TOTAL FROM orders O, food F WHERE O.CUST_ID=" + req.params.cid + " AND O.FOOD_ID=F.ID) AS P) AS PP ON C.ID=PP.CUST_ID SET C.BILL=PP.BILL;";
-    connection.query(insertStr.toString(), newOrders,function(err, results, fields) {
-            if (!err){
-                res.json(results);
+app.post("/customers/:id/orders", middleware.specRestaurantOrUser, function(req, res){
+    db(function(err1, connection){        
+        if (!err1){
+            var newOrders = req.body.orders;
+            var i = 0;
+            var insertStr = new mutableString(""); 
+            for (i = 0; i < newOrders.length; i++){
+                newOrders[i]['CUST_ID'] = req.params.id;
+                insertStr += "INSERT INTO orders SET ?;"; 
             }
-            else{
-                console.log(err); 
-                res.json({error: "Error adding orders"});
-            }
-      }
-    );
+            insertStr += "UPDATE customers C INNER JOIN( SELECT SUM(P.TOTAL) AS BILL, CUST_ID FROM ( SELECT O.CUST_ID AS CUST_ID, PORTION, PRICE,(PORTION*PRICE) AS TOTAL FROM orders O, food F WHERE O.CUST_ID=" + req.params.cid + " AND O.FOOD_ID=F.ID) AS P) AS PP ON C.ID=PP.CUST_ID SET C.BILL=PP.BILL;";            
+            connection.query(insertStr.toString(), newOrders,function(err, results, fields) {
+                connection.release(); 
+                    if (!err){
+                        res.json({success: true, results: results});
+                    }
+                    else{
+                        res.json({success: false, error: "Error adding orders"});
+                    }
+              }
+            );        
+        }
+        else
+            res.json({success: false, error: "database connection failed"});
+    }); 
 }); 
-app.get("/customers/:cid/orders", function(req, res){
-    connection.query(
-        'SELECT PORTION, NAME, (PRICE*PORTION) AS TOTAL FROM orders O, food F WHERE CUST_ID=? AND O.FOOD_ID=F.ID', [req.params.cid],
-        function(err, results, fields) {
-          if (!err)
-              res.json(results);
-          else
-              res.json({error: "Error getting orders"}); 
-      }
-    );
+app.get("/customers/:id/orders", middleware.specRestaurantOrUser, function(req, res){
+    db(function(err1, connection){
+        if (!err1){
+            connection.query(
+                'SELECT PORTION, NAME, (PRICE*PORTION) AS TOTAL FROM orders O, food F WHERE CUST_ID=? AND O.FOOD_ID=F.ID', [req.params.id],
+                function(err, results, fields) {
+                    connection.release(); 
+                  if (!err)
+                      res.json({success: true, results: results});
+                  else
+                      res.json({success: false, error: "Error getting orders"}); 
+              }
+            );            
+        }
+        else
+            res.json({success: false, error: "database connection failed"});
+    }); 
 });
 
 

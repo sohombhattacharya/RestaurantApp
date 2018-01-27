@@ -1,7 +1,4 @@
 # RestaurantApp
-restaurant app
-
-Table is a REST API that is currently still under development. It's purpose is to serve as the backend of a service that revolutionizes the group dining experience. 
 
 Tech Specs
 ----------------
